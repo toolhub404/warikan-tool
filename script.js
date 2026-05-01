@@ -8,6 +8,18 @@ function saveData() {
   localStorage.setItem("payments", JSON.stringify(payments));
 }
 
+function showToast(message) {
+  const toast = document.getElementById("toast");
+  if (!toast) return;
+
+  toast.textContent = message;
+  toast.classList.add("show");
+
+  setTimeout(() => {
+    toast.classList.remove("show");
+  }, 1600);
+}
+
 function addMember() {
   const nameInput = document.getElementById("memberName");
   const name = nameInput.value.trim();
@@ -27,6 +39,7 @@ function addMember() {
 
   saveData();
   render();
+  showToast("メンバーを追加しました");
 }
 
 function addPayment() {
@@ -54,12 +67,17 @@ function addPayment() {
     return;
   }
 
-  payments.push({ payer, amount, targets });
+  payments.push({
+    payer: payer,
+    amount: amount,
+    targets: targets
+  });
 
   document.getElementById("amount").value = "";
 
   saveData();
   render();
+  showToast("支払いを登録しました");
 }
 
 function deletePayment(index) {
@@ -77,6 +95,7 @@ function deletePayment(index) {
   payments.splice(index, 1);
   saveData();
   render();
+  showToast("履歴を削除しました");
 }
 
 function getRawDebts() {
@@ -85,7 +104,9 @@ function getRawDebts() {
   members.forEach(from => {
     debts[from] = {};
     members.forEach(to => {
-      if (from !== to) debts[from][to] = 0;
+      if (from !== to) {
+        debts[from][to] = 0;
+      }
     });
   });
 
@@ -95,8 +116,13 @@ function getRawDebts() {
     payment.targets.forEach(target => {
       if (target === payment.payer) return;
 
-      if (!debts[target]) debts[target] = {};
-      if (!debts[target][payment.payer]) debts[target][payment.payer] = 0;
+      if (!debts[target]) {
+        debts[target] = {};
+      }
+
+      if (!debts[target][payment.payer]) {
+        debts[target][payment.payer] = 0;
+      }
 
       debts[target][payment.payer] += share;
     });
@@ -160,8 +186,19 @@ function calculateMinimumMode() {
   Object.keys(balance).forEach(name => {
     const value = Math.round(balance[name]);
 
-    if (value > 0) creditors.push({ name, amount: value });
-    if (value < 0) debtors.push({ name, amount: -value });
+    if (value > 0) {
+      creditors.push({
+        name: name,
+        amount: value
+      });
+    }
+
+    if (value < 0) {
+      debtors.push({
+        name: name,
+        amount: -value
+      });
+    }
   });
 
   const results = [];
@@ -176,8 +213,13 @@ function calculateMinimumMode() {
     debtors[i].amount -= payAmount;
     creditors[j].amount -= payAmount;
 
-    if (debtors[i].amount === 0) i++;
-    if (creditors[j].amount === 0) j++;
+    if (debtors[i].amount === 0) {
+      i++;
+    }
+
+    if (creditors[j].amount === 0) {
+      j++;
+    }
   }
 
   return results;
@@ -186,6 +228,7 @@ function calculateMinimumMode() {
 function toggleResultMode() {
   resultMode = resultMode === "minimum" ? "history" : "minimum";
   render();
+  showToast(resultMode === "minimum" ? "最小精算に切替" : "履歴反映に切替");
 }
 
 function toggleHistory() {
@@ -323,6 +366,8 @@ function clearInput() {
   document.querySelectorAll(".target").forEach(checkbox => {
     checkbox.checked = true;
   });
+
+  showToast("入力をクリアしました");
 }
 
 function clearPayments() {
@@ -331,6 +376,7 @@ function clearPayments() {
   payments = [];
   saveData();
   render();
+  showToast("支払い履歴を削除しました");
 }
 
 function clearAll() {
@@ -340,6 +386,7 @@ function clearAll() {
   payments = [];
   saveData();
   render();
+  showToast("全データを削除しました");
 }
 
 function exportCSV() {
@@ -358,6 +405,7 @@ function exportCSV() {
   a.click();
 
   URL.revokeObjectURL(url);
+  showToast("CSVを出力しました");
 }
 
 function importCSV(event) {
@@ -380,19 +428,30 @@ function importCSV(event) {
 
       const payer = cols[1].replaceAll('"', "");
       const amount = Number(cols[2].replaceAll('"', ""));
-      const targets = cols[3].replaceAll('"', "").split("|");
+      const targets = cols[3].replaceAll('"', "").split("|").filter(x => x);
 
-      payments.push({ payer, amount, targets });
+      payments.push({
+        payer: payer,
+        amount: amount,
+        targets: targets
+      });
 
-      if (!members.includes(payer)) members.push(payer);
+      if (!members.includes(payer)) {
+        members.push(payer);
+      }
 
       targets.forEach(target => {
-        if (!members.includes(target)) members.push(target);
+        if (!members.includes(target)) {
+          members.push(target);
+        }
       });
     });
 
     saveData();
     render();
+
+    event.target.value = "";
+    showToast("CSVを読み込みました");
   };
 
   reader.readAsText(file);

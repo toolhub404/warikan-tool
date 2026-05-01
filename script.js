@@ -20,6 +20,10 @@ function showToast(message) {
   }, 1600);
 }
 
+function formatYen(value) {
+  return `${Math.round(value).toLocaleString()}円`;
+}
+
 function addMember() {
   const nameInput = document.getElementById("memberName");
   const name = nameInput.value.trim();
@@ -43,9 +47,11 @@ function addMember() {
 }
 
 function addPayment() {
+  const titleInput = document.getElementById("paymentTitle");
   const payer = document.getElementById("payer").value;
   const amount = Number(document.getElementById("amount").value);
   const targets = Array.from(document.querySelectorAll(".target:checked")).map(x => x.value);
+  const title = titleInput.value.trim() || "無題";
 
   if (members.length === 0) {
     alert("先にメンバーを登録してください");
@@ -68,12 +74,14 @@ function addPayment() {
   }
 
   payments.push({
+    title: title,
     payer: payer,
     amount: amount,
     targets: targets
   });
 
   document.getElementById("amount").value = "";
+  titleInput.value = "";
 
   saveData();
   render();
@@ -86,7 +94,8 @@ function deletePayment(index) {
   if (!payment) return;
 
   const message =
-    `${payment.payer} が ${payment.amount}円 支払い\n` +
+    `【${payment.title || "無題"}】\n` +
+    `${payment.payer} が ${formatYen(payment.amount)} 支払い\n` +
     `対象：${payment.targets.join("、")}\n\n` +
     `この履歴を削除しますか？`;
 
@@ -150,9 +159,9 @@ function calculateHistoryMode() {
       const diff = Math.round(ab - ba);
 
       if (diff > 0) {
-        results.push(`${a} → ${b}：${diff}円`);
+        results.push(`${a} → ${b}：${formatYen(diff)}`);
       } else if (diff < 0) {
-        results.push(`${b} → ${a}：${Math.abs(diff)}円`);
+        results.push(`${b} → ${a}：${formatYen(Math.abs(diff))}`);
       }
 
       processed.add(key1);
@@ -187,17 +196,11 @@ function calculateMinimumMode() {
     const value = Math.round(balance[name]);
 
     if (value > 0) {
-      creditors.push({
-        name: name,
-        amount: value
-      });
+      creditors.push({ name: name, amount: value });
     }
 
     if (value < 0) {
-      debtors.push({
-        name: name,
-        amount: -value
-      });
+      debtors.push({ name: name, amount: -value });
     }
   });
 
@@ -208,7 +211,7 @@ function calculateMinimumMode() {
   while (i < debtors.length && j < creditors.length) {
     const payAmount = Math.min(debtors[i].amount, creditors[j].amount);
 
-    results.push(`${debtors[i].name} → ${creditors[j].name}：${payAmount}円`);
+    results.push(`${debtors[i].name} → ${creditors[j].name}：${formatYen(payAmount)}`);
 
     debtors[i].amount -= payAmount;
     creditors[j].amount -= payAmount;
@@ -332,9 +335,13 @@ function renderHistory() {
     const li = document.createElement("li");
     li.className = "history-item";
 
+    const title = document.createElement("div");
+    title.className = "history-title";
+    title.textContent = payment.title || "無題";
+
     const main = document.createElement("div");
     main.className = "history-main";
-    main.textContent = `${index + 1}. ${payment.payer} が ${payment.amount}円 支払い`;
+    main.textContent = `${index + 1}. ${payment.payer} が ${formatYen(payment.amount)} 支払い`;
 
     const sub = document.createElement("div");
     sub.className = "history-sub";
@@ -345,6 +352,7 @@ function renderHistory() {
     deleteButton.textContent = "この履歴を削除";
     deleteButton.onclick = () => deletePayment(index);
 
+    li.appendChild(title);
     li.appendChild(main);
     li.appendChild(sub);
     li.appendChild(deleteButton);
@@ -361,6 +369,7 @@ function render() {
 
 function clearInput() {
   document.getElementById("memberName").value = "";
+  document.getElementById("paymentTitle").value = "";
   document.getElementById("amount").value = "";
 
   document.querySelectorAll(".target").forEach(checkbox => {
@@ -384,77 +393,145 @@ function clearAll() {
 
   members = [];
   payments = [];
-  saveData();
+  localStorage.removeItem("members");
+  localStorage.removeItem("payments");
   render();
   showToast("全データを削除しました");
 }
 
-function exportCSV() {
-  let csv = "type,payer,amount,targets\n";
-
-  payments.forEach(payment => {
-    csv += `payment,${payment.payer},${payment.amount},"${payment.targets.join("|")}"\n`;
-  });
-
-  const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "warikan-data.csv";
-  a.click();
-
-  URL.revokeObjectURL(url);
-  showToast("CSVを出力しました");
+function encodeData(data) {
+  const json = JSON.stringify(data);
+  return btoa(unescape(encodeURIComponent(json)));
 }
 
-function importCSV(event) {
-  const file = event.target.files[0];
-  if (!file) return;
+function decodeData(text) {
+  const json = decodeURIComponent(escape(atob(text)));
+  return JSON.parse(json);
+}
 
-  const reader = new FileReader();
+function generateShareText() {
+  const minimumResults = calculateMinimumMode();
+  const historyResults = calculateHistoryMode();
 
-  reader.onload = function(e) {
-    const text = e.target.result;
-    const lines = text.split(/\r?\n/).slice(1);
+  const data = {
+    version: 1,
+    members: members,
+    payments: payments
+  };
 
-    payments = [];
+  const encoded = encodeData(data);
 
-    lines.forEach(line => {
-      if (!line.trim()) return;
+  let text = "";
 
-      const cols = line.match(/(".*?"|[^",]+)(?=\s*,|\s*$)/g);
-      if (!cols || cols.length < 4) return;
+  text += "【割り勘メモ】\n";
+  text += "\n";
 
-      const payer = cols[1].replaceAll('"', "");
-      const amount = Number(cols[2].replaceAll('"', ""));
-      const targets = cols[3].replaceAll('"', "").split("|").filter(x => x);
+  text += "■メンバー\n";
+  text += members.length ? members.join("、") : "なし";
+  text += "\n\n";
 
-      payments.push({
-        payer: payer,
-        amount: amount,
-        targets: targets
-      });
+  text += "■支払い履歴\n";
 
-      if (!members.includes(payer)) {
-        members.push(payer);
-      }
+  if (payments.length === 0) {
+    text += "なし\n";
+  } else {
+    payments.forEach((payment, index) => {
+      text += `${index + 1}. 【${payment.title || "無題"}】${payment.payer} が ${formatYen(payment.amount)} 支払い\n`;
+      text += `   対象：${payment.targets.join("、")}\n`;
+    });
+  }
 
-      targets.forEach(target => {
-        if (!members.includes(target)) {
-          members.push(target);
-        }
-      });
+  text += "\n";
+
+  text += "■最小精算\n";
+  if (minimumResults.length === 0) {
+    text += "精算はありません\n";
+  } else {
+    minimumResults.forEach(result => {
+      text += `・${result}\n`;
+    });
+  }
+
+  text += "\n";
+
+  text += "■履歴反映方式\n";
+  if (historyResults.length === 0) {
+    text += "精算はありません\n";
+  } else {
+    historyResults.forEach(result => {
+      text += `・${result}\n`;
+    });
+  }
+
+  text += "\n";
+  text += "----\n";
+  text += "この下は割り勘ツール読み込み用データです\n";
+  text += "WARIKAN_DATA_START\n";
+  text += encoded + "\n";
+  text += "WARIKAN_DATA_END\n";
+
+  document.getElementById("shareText").value = text;
+  showToast("共有テキストを作成しました");
+}
+
+async function copyShareText() {
+  const shareText = document.getElementById("shareText");
+
+  if (!shareText.value.trim()) {
+    generateShareText();
+  }
+
+  shareText.select();
+  shareText.setSelectionRange(0, 999999);
+
+  try {
+    await navigator.clipboard.writeText(shareText.value);
+    showToast("コピーしました");
+  } catch (e) {
+    document.execCommand("copy");
+    showToast("コピーしました");
+  }
+}
+
+function importShareText() {
+  const text = document.getElementById("shareText").value.trim();
+
+  if (!text) {
+    alert("読み込むテキストを貼り付けてください");
+    return;
+  }
+
+  const match = text.match(/WARIKAN_DATA_START\s*([\s\S]*?)\s*WARIKAN_DATA_END/);
+
+  if (!match) {
+    alert("読み込み用データが見つかりません");
+    return;
+  }
+
+  try {
+    const data = decodeData(match[1].trim());
+
+    if (!Array.isArray(data.members) || !Array.isArray(data.payments)) {
+      alert("データ形式が正しくありません");
+      return;
+    }
+
+    members = data.members;
+    payments = data.payments.map(payment => {
+      return {
+        title: payment.title || "無題",
+        payer: payment.payer,
+        amount: Number(payment.amount),
+        targets: payment.targets || []
+      };
     });
 
     saveData();
     render();
-
-    event.target.value = "";
-    showToast("CSVを読み込みました");
-  };
-
-  reader.readAsText(file);
+    showToast("テキストから読み込みました");
+  } catch (e) {
+    alert("読み込みに失敗しました");
+  }
 }
 
 render();

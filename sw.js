@@ -1,11 +1,11 @@
-const CACHE_NAME = "warikan-tool-v11";
+const CACHE_NAME = "warikan-tool-v12";
 
 const FILES_TO_CACHE = [
   "./",
   "./index.html",
-  "./style.css?v=11",
-  "./script.js?v=11",
-  "./manifest.json?v=11"
+  "./style.css?v=12",
+  "./script.js?v=12",
+  "./manifest.json?v=12"
 ];
 
 self.addEventListener("install", event => {

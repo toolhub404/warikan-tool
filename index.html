@@ -4,20 +4,24 @@
   <meta charset="UTF-8">
   <title>割り勘ツール</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="style.css?v=4">
+  <link rel="stylesheet" href="style.css?v=5">
 </head>
 <body>
   <main>
-    <h1>割り勘ツール</h1>
+    <div class="app-header">
+      <div class="app-icon">¥</div>
+      <h1>割り勘ツール</h1>
+      <p>立替・割り勘をサクッと精算</p>
+    </div>
 
-    <section>
+    <section class="card">
       <h2>メンバー登録</h2>
       <input id="memberName" placeholder="名前を入力">
       <button onclick="addMember()">メンバー追加</button>
       <ul id="memberList"></ul>
     </section>
 
-    <section>
+    <section class="card">
       <h2>支払い登録</h2>
 
       <label>払った人</label>
@@ -33,22 +37,22 @@
       <button class="sub" onclick="clearInput()">入力クリア</button>
     </section>
 
-    <section>
+    <section class="card result-card">
       <h2>精算結果</h2>
       <p id="resultModeText">最小精算方式</p>
       <button class="sub" onclick="toggleResultMode()">履歴反映方式に切替</button>
       <ul id="resultList"></ul>
     </section>
 
-    <section>
+    <section class="card">
       <h2>支払い履歴</h2>
       <button class="sub" onclick="toggleHistory()">履歴を表示</button>
-      <div id="historyArea" class="hidden">
+      <div id="historyArea" class="history-area hidden">
         <ul id="historyList"></ul>
       </div>
     </section>
 
-    <section>
+    <section class="card">
       <h2>データ管理</h2>
 
       <button onclick="exportCSV()">CSV出力</button>
@@ -61,6 +65,8 @@
     </section>
   </main>
 
-  <script src="script.js?v=4"></script>
+  <div id="toast" class="toast">保存しました</div>
+
+  <script src="script.js?v=5"></script>
 </body>
 </html>

@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <title>割り勘ツール</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="./style.css?v=8">
+  <link rel="stylesheet" href="./style.css?v=9">
 </head>
 <body>
   <main>
@@ -18,11 +18,11 @@
       <h2>メンバー登録</h2>
       <input id="memberName" placeholder="名前を入力">
       <button onclick="addMember()">メンバー追加</button>
-      <ul id="memberList"></ul>
+      <div id="memberList"></div>
     </section>
 
     <section class="card">
-      <h2>支払い登録</h2>
+      <h2 id="paymentFormTitle">支払い登録</h2>
 
       <label>タイトル</label>
       <input id="paymentTitle" placeholder="例：高速代(行き)">
@@ -36,7 +36,8 @@
       <label>対象メンバー</label>
       <div id="targetMembers"></div>
 
-      <button onclick="addPayment()">支払い登録</button>
+      <button id="paymentSubmitButton" onclick="savePayment()">支払い登録</button>
+      <button id="paymentCancelButton" class="sub hidden" onclick="cancelPaymentEdit()">編集キャンセル</button>
       <button class="sub" onclick="clearInput()">入力クリア</button>
     </section>
 
@@ -44,6 +45,7 @@
       <h2>精算結果</h2>
       <p id="resultModeText">最小精算方式</p>
       <button class="sub" onclick="toggleResultMode()">履歴反映方式に切替</button>
+      <button class="sub" onclick="clearPaidChecks()">支払い済みチェックをクリア</button>
       <ul id="resultList"></ul>
     </section>
 
@@ -77,6 +79,6 @@
 
   <div id="toast" class="toast">保存しました</div>
 
-  <script src="./script.js?v=8"></script>
+  <script src="./script.js?v=9"></script>
 </body>
 </html>

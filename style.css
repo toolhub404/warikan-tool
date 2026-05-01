@@ -4,7 +4,6 @@
   --text: #1f2937;
   --muted: #6b7280;
   --main: #111827;
-  --sub: #6b7280;
   --danger: #dc2626;
   --border: #e5e7eb;
   --shadow: 0 12px 30px rgba(15, 23, 42, 0.10);
@@ -103,17 +102,20 @@ label {
 
 input,
 select,
-button {
+button,
+textarea {
   width: 100%;
   padding: 13px;
   margin: 8px 0;
   font-size: 16px;
   box-sizing: border-box;
   border-radius: 14px;
+  font-family: inherit;
 }
 
 input,
-select {
+select,
+textarea {
   border: 1px solid var(--border);
   background: #fff;
   color: var(--text);
@@ -121,15 +123,22 @@ select {
   transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
 }
 
+textarea {
+  min-height: 210px;
+  resize: vertical;
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
+
 input:focus,
-select:focus {
+select:focus,
+textarea:focus {
   border-color: #111827;
   box-shadow: 0 0 0 4px rgba(17, 24, 39, 0.10);
   transform: translateY(-1px);
 }
 
-button,
-.file-button {
+button {
   border: none;
   background: linear-gradient(135deg, #111827, #374151);
   color: white;
@@ -139,8 +148,7 @@ button,
   transition: transform 0.12s ease, box-shadow 0.12s ease, opacity 0.12s ease;
 }
 
-button:active,
-.file-button:active {
+button:active {
   transform: scale(0.97);
   box-shadow: 0 4px 10px rgba(17, 24, 39, 0.16);
 }
@@ -187,8 +195,6 @@ li {
   border: 1px solid #e5e7eb;
 }
 
-/* 対象メンバー */
-
 #targetMembers {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -226,8 +232,6 @@ li {
   text-overflow: ellipsis;
 }
 
-/* 支払い履歴 */
-
 .history-area {
   animation: openArea 0.25s ease both;
 }
@@ -247,6 +251,17 @@ li {
   margin-bottom: 4px;
 }
 
+.history-title {
+  display: inline-block;
+  font-size: 13px;
+  font-weight: 800;
+  color: #3730a3;
+  background: #eef2ff;
+  padding: 4px 8px;
+  border-radius: 999px;
+  margin-bottom: 6px;
+}
+
 .history-sub {
   font-size: 14px;
   color: var(--muted);
@@ -257,25 +272,6 @@ li {
   padding: 9px;
   font-size: 14px;
 }
-
-/* CSV読み込みボタン */
-
-.file-input {
-  display: none;
-}
-
-.file-button {
-  display: block;
-  width: 100%;
-  padding: 13px;
-  margin: 8px 0;
-  font-size: 16px;
-  box-sizing: border-box;
-  text-align: center;
-  border-radius: 14px;
-}
-
-/* トースト */
 
 .toast {
   position: fixed;
@@ -299,15 +295,9 @@ li {
   transform: translateX(-50%) translateY(0);
 }
 
-/* アニメーション */
-
 @keyframes pageFade {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 @keyframes slideDown {

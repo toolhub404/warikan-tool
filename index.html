@@ -4,7 +4,16 @@
   <meta charset="UTF-8">
   <title>割り勘ツール</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="./style.css?v=9">
+
+  <!-- PWA設定 -->
+  <link rel="manifest" href="./manifest.json?v=11">
+  <meta name="theme-color" content="#111827">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="割り勘ツール">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <link rel="apple-touch-icon" href="./icon-192.png">
+
+  <link rel="stylesheet" href="./style.css?v=11">
 </head>
 <body>
   <main>
@@ -79,6 +88,18 @@
 
   <div id="toast" class="toast">保存しました</div>
 
-  <script src="./script.js?v=9"></script>
+  <script src="./script.js?v=11"></script>
+
+  <!-- Service Worker登録 -->
+  <script>
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("./sw.js?v=11")
+          .catch(error => {
+            console.log("Service Worker registration failed:", error);
+          });
+      });
+    }
+  </script>
 </body>
 </html>

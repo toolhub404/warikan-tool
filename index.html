@@ -7,40 +7,45 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <h1>割り勘ツール</h1>
+  <main>
+    <h1>割り勘ツール</h1>
 
-  <section>
-    <h2>メンバー登録</h2>
-    <input id="memberName" placeholder="名前">
-    <button onclick="addMember()">追加</button>
-    <ul id="memberList"></ul>
-  </section>
+    <section>
+      <h2>メンバー登録</h2>
+      <input id="memberName" placeholder="名前を入力">
+      <button onclick="addMember()">メンバー追加</button>
+      <ul id="memberList"></ul>
+    </section>
 
-  <section>
-    <h2>支払い登録</h2>
-    <label>払った人</label>
-    <select id="payer"></select>
+    <section>
+      <h2>支払い登録</h2>
 
-    <label>金額</label>
-    <input id="amount" type="number" placeholder="例：3000">
+      <label>払った人</label>
+      <select id="payer"></select>
 
-    <label>対象メンバー</label>
-    <div id="targetMembers"></div>
+      <label>金額</label>
+      <input id="amount" type="number" placeholder="例：3000">
 
-    <button onclick="addPayment()">登録</button>
-  </section>
+      <label>対象メンバー</label>
+      <div id="targetMembers"></div>
 
-  <section>
-    <h2>精算結果</h2>
-    <ul id="resultList"></ul>
-  </section>
+      <button onclick="addPayment()">支払い登録</button>
+      <button class="sub" onclick="clearInput()">入力クリア</button>
+    </section>
 
-  <section>
-    <h2>データ管理</h2>
-    <button onclick="exportCSV()">CSV出力</button>
-    <input type="file" accept=".csv" onchange="importCSV(event)">
-    <button onclick="clearAll()">全削除</button>
-  </section>
+    <section>
+      <h2>精算結果</h2>
+      <ul id="resultList"></ul>
+    </section>
+
+    <section>
+      <h2>データ管理</h2>
+      <button onclick="exportCSV()">CSV出力</button>
+      <input type="file" accept=".csv" onchange="importCSV(event)">
+      <button class="sub" onclick="clearPayments()">支払い履歴クリア</button>
+      <button class="danger" onclick="clearAll()">全削除</button>
+    </section>
+  </main>
 
   <script src="script.js"></script>
 </body>

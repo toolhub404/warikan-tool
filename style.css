@@ -65,6 +65,10 @@ ul {
   padding-left: 20px;
 }
 
+.hidden {
+  display: none;
+}
+
 #resultModeText {
   font-weight: bold;
   margin: 4px 0 8px;
@@ -98,4 +102,29 @@ ul {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.history-item {
+  list-style: none;
+  margin: 10px 0;
+  padding: 12px;
+  background: #f1f3f5;
+  border-radius: 10px;
+}
+
+.history-main {
+  font-weight: bold;
+  margin-bottom: 4px;
+}
+
+.history-sub {
+  font-size: 14px;
+  color: #555;
+  margin-bottom: 8px;
+}
+
+.history-delete {
+  background: #c0392b;
+  padding: 8px;
+  font-size: 14px;
 }

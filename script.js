@@ -533,5 +533,8 @@ function importShareText() {
     alert("読み込みに失敗しました");
   }
 }
-
+function clearShareText() {
+  document.getElementById("shareText").value = "";
+  showToast("共有テキストをクリアしました");
+}
 render();

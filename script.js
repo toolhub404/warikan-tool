@@ -6,6 +6,112 @@ let resultMode = "minimum";
 let historyVisible = false;
 let editingPaymentIndex = null;
 
+/* 自作モーダル */
+
+function openModal(options) {
+  return new Promise(resolve => {
+    const overlay = document.getElementById("modalOverlay");
+    const title = document.getElementById("modalTitle");
+    const message = document.getElementById("modalMessage");
+    const input = document.getElementById("modalInput");
+    const okButton = document.getElementById("modalOkButton");
+    const cancelButton = document.getElementById("modalCancelButton");
+
+    title.textContent = options.title || "確認";
+    message.textContent = options.message || "";
+    okButton.textContent = options.okText || "OK";
+    cancelButton.textContent = options.cancelText || "キャンセル";
+
+    input.value = options.defaultValue || "";
+
+    if (options.type === "prompt") {
+      input.classList.remove("hidden");
+    } else {
+      input.classList.add("hidden");
+    }
+
+    if (options.type === "alert") {
+      cancelButton.classList.add("hidden");
+      okButton.textContent = options.okText || "閉じる";
+    } else {
+      cancelButton.classList.remove("hidden");
+    }
+
+    overlay.classList.remove("hidden");
+
+    setTimeout(() => {
+      if (options.type === "prompt") {
+        input.focus();
+        input.select();
+      } else {
+        okButton.focus();
+      }
+    }, 50);
+
+    function cleanup(value) {
+      overlay.classList.add("hidden");
+      okButton.onclick = null;
+      cancelButton.onclick = null;
+      input.onkeydown = null;
+      resolve(value);
+    }
+
+    okButton.onclick = () => {
+      if (options.type === "prompt") {
+        cleanup(input.value);
+      } else {
+        cleanup(true);
+      }
+    };
+
+    cancelButton.onclick = () => {
+      if (options.type === "prompt") {
+        cleanup(null);
+      } else {
+        cleanup(false);
+      }
+    };
+
+    input.onkeydown = event => {
+      if (event.key === "Enter") {
+        cleanup(input.value);
+      }
+    };
+  });
+}
+
+function showMessage(message, title = "確認") {
+  return openModal({
+    type: "alert",
+    title,
+    message,
+    okText: "閉じる"
+  });
+}
+
+function showConfirm(message, title = "確認") {
+  return openModal({
+    type: "confirm",
+    title,
+    message,
+    okText: "OK",
+    cancelText: "キャンセル"
+  });
+}
+
+function showPrompt(message, defaultValue = "", title = "入力") {
+  return openModal({
+    type: "prompt",
+    title,
+    message,
+    defaultValue,
+    okText: "OK",
+    cancelText: "キャンセル"
+  });
+}
+
+/* 共通 */
+
 function saveData() {
   localStorage.setItem("members", JSON.stringify(members));
   localStorage.setItem("payments", JSON.stringify(payments));
@@ -35,17 +141,17 @@ function resetPaidChecks() {
 
 /* メンバー */
 
-function addMember() {
+async function addMember() {
   const nameInput = document.getElementById("memberName");
   const name = nameInput.value.trim();
 
   if (!name) {
-    alert("名前を入力してください");
+    await showMessage("名前を入力してください");
     return;
   }
 
   if (members.includes(name)) {
-    alert("同じ名前のメンバーがいます");
+    await showMessage("同じ名前のメンバーがいます");
     return;
   }
 
@@ -57,19 +163,20 @@ function addMember() {
   showToast("メンバーを追加しました");
 }
 
-function renameMember(oldName) {
-  const newName = prompt("新しい名前を入力してください", oldName);
+async function renameMember(oldName) {
+  const newName = await showPrompt("新しい名前を入力してください", oldName, "名前変更");
+
   if (newName === null) return;
 
   const trimmed = newName.trim();
 
   if (!trimmed) {
-    alert("名前を入力してください");
+    await showMessage("名前を入力してください");
     return;
   }
 
   if (trimmed !== oldName && members.includes(trimmed)) {
-    alert("同じ名前のメンバーがいます");
+    await showMessage("同じ名前のメンバーがいます");
     return;
   }
 
@@ -89,14 +196,15 @@ function renameMember(oldName) {
   showToast("メンバー名を変更しました");
 }
 
-function deleteMember(name) {
+async function deleteMember(name) {
   const message =
     `${name} を削除しますか？\n\n` +
     `・この人が払った支払い履歴は削除されます\n` +
     `・対象メンバーからも除外されます\n` +
     `・支払い済みチェックはリセットされます`;
 
-  if (!confirm(message)) return;
+  const ok = await showConfirm(message, "メンバー削除");
+  if (!ok) return;
 
   members = members.filter(member => member !== name);
 
@@ -118,29 +226,29 @@ function deleteMember(name) {
 
 /* 支払い登録・編集 */
 
-function getPaymentFormData() {
+async function getPaymentFormData() {
   const title = document.getElementById("paymentTitle").value.trim() || "無題";
   const payer = document.getElementById("payer").value;
   const amount = Number(document.getElementById("amount").value);
   const targets = Array.from(document.querySelectorAll(".target:checked")).map(x => x.value);
 
   if (members.length === 0) {
-    alert("先にメンバーを登録してください");
+    await showMessage("先にメンバーを登録してください");
     return null;
   }
 
   if (!payer) {
-    alert("払った人を選択してください");
+    await showMessage("払った人を選択してください");
     return null;
   }
 
   if (!amount || amount <= 0) {
-    alert("金額を入力してください");
+    await showMessage("金額を入力してください");
     return null;
   }
 
   if (targets.length === 0) {
-    alert("対象メンバーを選択してください");
+    await showMessage("対象メンバーを選択してください");
     return null;
   }
 
@@ -152,8 +260,8 @@ function getPaymentFormData() {
   };
 }
 
-function savePayment() {
-  const data = getPaymentFormData();
+async function savePayment() {
+  const data = await getPaymentFormData();
   if (!data) return;
 
   if (editingPaymentIndex === null) {
@@ -201,7 +309,7 @@ function cancelPaymentEdit() {
   showToast("編集をキャンセルしました");
 }
 
-function deletePayment(index) {
+async function deletePayment(index) {
   const payment = payments[index];
   if (!payment) return;
 
@@ -211,7 +319,8 @@ function deletePayment(index) {
     `対象：${payment.targets.join("、")}\n\n` +
     `この履歴を削除しますか？`;
 
-  if (!confirm(message)) return;
+  const ok = await showConfirm(message, "履歴削除");
+  if (!ok) return;
 
   payments.splice(index, 1);
 
@@ -359,8 +468,9 @@ function togglePaidCheck(key, checked) {
   renderResults();
 }
 
-function clearPaidChecks() {
-  if (!confirm("支払い済みチェックをすべてクリアしますか？")) return;
+async function clearPaidChecks() {
+  const ok = await showConfirm("支払い済みチェックをすべてクリアしますか？", "チェックをクリア");
+  if (!ok) return;
 
   resetPaidChecks();
   renderResults();
@@ -603,8 +713,9 @@ function clearInput() {
   showToast("入力をクリアしました");
 }
 
-function clearPayments() {
-  if (!confirm("支払い履歴だけ削除しますか？")) return;
+async function clearPayments() {
+  const ok = await showConfirm("支払い履歴だけ削除しますか？", "支払い履歴クリア");
+  if (!ok) return;
 
   payments = [];
   editingPaymentIndex = null;
@@ -614,8 +725,9 @@ function clearPayments() {
   showToast("支払い履歴を削除しました");
 }
 
-function clearAll() {
-  if (!confirm("メンバーも支払い履歴も全て削除しますか？")) return;
+async function clearAll() {
+  const ok = await showConfirm("メンバーも支払い履歴も全て削除しますか？", "全削除");
+  if (!ok) return;
 
   members = [];
   payments = [];
@@ -729,18 +841,18 @@ function clearShareText() {
   showToast("共有テキストをクリアしました");
 }
 
-function importShareText() {
+async function importShareText() {
   const text = document.getElementById("shareText").value.trim();
 
   if (!text) {
-    alert("読み込むテキストを貼り付けてください");
+    await showMessage("読み込むテキストを貼り付けてください");
     return;
   }
 
   const match = text.match(/WARIKAN_DATA_START\s*([\s\S]*?)\s*WARIKAN_DATA_END/);
 
   if (!match) {
-    alert("読み込み用データが見つかりません");
+    await showMessage("読み込み用データが見つかりません");
     return;
   }
 
@@ -748,7 +860,7 @@ function importShareText() {
     const data = decodeData(match[1].trim());
 
     if (!Array.isArray(data.members) || !Array.isArray(data.payments)) {
-      alert("データ形式が正しくありません");
+      await showMessage("データ形式が正しくありません");
       return;
     }
 
@@ -769,7 +881,7 @@ function importShareText() {
     render();
     showToast("テキストから読み込みました");
   } catch (e) {
-    alert("読み込みに失敗しました");
+    await showMessage("読み込みに失敗しました");
   }
 }
 
